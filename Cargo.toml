@@ -1,0 +1,24 @@
+[package]
+name = "qompas"
+version = "0.1.0"
+edition = "2021"
+description = "Quantum exploration library — simulate and visualize quantum circuits with GPU acceleration"
+license = "MIT"
+
+[dependencies]
+# GPU-accelerated rendering
+blade-graphics = "0.6"
+blade-egui = "0.6"
+# Immediate-mode UI for interactive exploration
+egui = "0.30"
+# Math essentials for quantum state simulation
+nalgebra = { version = "0.33", features = ["std"] }
+num-complex = "0.4"
+# Circuit format parsing (OpenQASM)
+nom = "7"
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+approx = "0.5"
