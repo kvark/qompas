@@ -1,14 +1,16 @@
-//! Visualization scaffolding for quantum circuit exploration.
+//! Visualization for quantum circuit exploration.
 //!
-//! This module will provide:
-//! - Circuit diagram rendering via egui
-//! - State-vector bar charts (amplitude + phase)
-//! - Bloch sphere display for single-qubit states
-//! - Interactive step-through controls
-//!
-//! The rendering backend is **blade-graphics**, giving us portable GPU
-//! acceleration across Vulkan, Metal, and DX12.
+//! - [`circuit_panel`] — interactive circuit diagram with drag-and-drop gate placement
+//! - [`state_panel`] — probability bar chart with phase-colored amplitudes
+//! - [`controls`] — step / run / reset controls for circuit execution
+//! - [`app`] — top-level application tying everything together
 
+pub mod app;
+pub mod circuit_panel;
+pub mod controls;
+pub mod state_panel;
+
+// Re-export layout utilities used by the circuit panel.
 use crate::circuit::{Circuit, Op};
 
 /// Visual layout information for one gate in the circuit diagram.
@@ -24,8 +26,6 @@ pub struct GateVisual {
 
 /// Lay out a circuit into a column-based visual representation.
 pub fn layout_circuit(circuit: &Circuit) -> Vec<GateVisual> {
-    // Simple greedy layout: assign each gate to the earliest column
-    // where all its qubit wires are free.
     let mut wire_horizon = vec![0usize; circuit.num_qubits];
     let mut visuals = Vec::with_capacity(circuit.ops.len());
 
@@ -70,8 +70,8 @@ mod tests {
         c.h(0).cnot(0, 1);
         let vis = layout_circuit(&c);
         assert_eq!(vis.len(), 2);
-        assert_eq!(vis[0].column, 0); // H on q0
-        assert_eq!(vis[1].column, 1); // CNOT after H
+        assert_eq!(vis[0].column, 0);
+        assert_eq!(vis[1].column, 1);
         assert_eq!(circuit_depth(&vis), 2);
     }
 
@@ -80,7 +80,6 @@ mod tests {
         let mut c = Circuit::new(3);
         c.h(0).h(1).h(2);
         let vis = layout_circuit(&c);
-        // All three H gates operate on different qubits → same column
         assert!(vis.iter().all(|v| v.column == 0));
         assert_eq!(circuit_depth(&vis), 1);
     }
