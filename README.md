@@ -1,0 +1,2 @@
+# qompas
+Quantum exploration library
