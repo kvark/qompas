@@ -94,6 +94,12 @@ impl ExecController {
                 self.measurements.push((*target, outcome));
                 self.qubits[*target] = Some(qubit);
             }
+            Op::Oracle { target_state } => {
+                crate::algorithms::oracle(&mut self.state, *target_state);
+            }
+            Op::Diffusion => {
+                crate::algorithms::diffusion(&mut self.state);
+            }
         }
 
         self.step += 1;

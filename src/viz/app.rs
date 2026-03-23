@@ -10,6 +10,7 @@ pub enum Preset {
     Bell,
     Ghz3,
     Teleportation,
+    Grover4,
     Empty(usize),
 }
 
@@ -36,6 +37,23 @@ impl Preset {
                 // Measurements
                 c.add_measure(0);
                 c.add_measure(1);
+                c
+            }
+            Preset::Grover4 => {
+                // 4-qubit Grover's search for |1011⟩ (index 11)
+                let n = 4;
+                let target_state = 11;
+                let iters = crate::algorithms::optimal_iterations(n);
+                let mut c = Circuit::new(n);
+                // Hadamard on all qubits → uniform superposition
+                for q in 0..n {
+                    c.h(q);
+                }
+                // Grover iterations
+                for _ in 0..iters {
+                    c.oracle(target_state);
+                    c.diffusion();
+                }
                 c
             }
             Preset::Empty(n) => Circuit::new(*n),
@@ -99,6 +117,10 @@ impl QompasApp {
                     }
                     if ui.button("Teleportation").clicked() {
                         self.load_preset(Preset::Teleportation);
+                        ui.close_menu();
+                    }
+                    if ui.button("Grover (4 qubits)").clicked() {
+                        self.load_preset(Preset::Grover4);
                         ui.close_menu();
                     }
                 });

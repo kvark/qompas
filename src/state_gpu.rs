@@ -228,6 +228,15 @@ impl StateGpu {
         );
     }
 
+    /// Get the raw pointer to the staging buffer for direct writes.
+    ///
+    /// # Safety
+    /// Caller must ensure writes don't exceed buffer size and that
+    /// the buffer is not concurrently accessed by the GPU.
+    pub unsafe fn staging_buffer_ptr(&self) -> *mut u8 {
+        self.staging_buffer.data()
+    }
+
     /// Read amplitudes back to CPU (call after download + submit + wait).
     pub fn read_amplitudes(&self, gpu: &blade_graphics::Context) -> Vec<[f32; 2]> {
         gpu.sync_buffer(self.staging_buffer);

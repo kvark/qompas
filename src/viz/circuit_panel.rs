@@ -170,6 +170,8 @@ impl CircuitPanel {
             // Gate box
             let bg = if vis.label == "M" {
                 Color32::from_rgb(90, 60, 40)
+            } else if vis.label.starts_with('O') || vis.label == "Diff" {
+                Color32::from_rgb(60, 40, 80)
             } else {
                 Color32::from_rgb(40, 50, 80)
             };

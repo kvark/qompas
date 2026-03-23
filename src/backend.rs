@@ -176,6 +176,51 @@ impl Backend {
                     });
                     encoder.start();
                 }
+                Op::Oracle { .. } | Op::Diffusion => {
+                    // These n-qubit ops need CPU fallback — download, apply, re-upload
+                    state_gpu.download(&mut encoder);
+                    let sp = gpu.submit(&mut encoder);
+                    gpu.wait_for(&sp, !0);
+                    gpu.destroy_command_encoder(&mut encoder);
+
+                    let amps_f32 = state_gpu.read_amplitudes(gpu);
+                    let mut cpu_state = StateVec::new(num_qubits);
+                    for (i, [re, im]) in amps_f32.iter().enumerate() {
+                        cpu_state.amplitudes[i] =
+                            num_complex::Complex64::new(*re as f64, *im as f64);
+                    }
+                    match op {
+                        Op::Oracle { target_state } => {
+                            crate::algorithms::oracle(&mut cpu_state, *target_state);
+                        }
+                        Op::Diffusion => {
+                            crate::algorithms::diffusion(&mut cpu_state);
+                        }
+                        _ => unreachable!(),
+                    }
+                    // Re-upload
+                    unsafe {
+                        let ptr = state_gpu.staging_buffer_ptr() as *mut [f32; 2];
+                        for (i, amp) in cpu_state.amplitudes.iter().enumerate() {
+                            *ptr.add(i) = [amp.re as f32, amp.im as f32];
+                        }
+                    }
+                    encoder = gpu.create_command_encoder(blade_graphics::CommandEncoderDesc {
+                        name: "circuit_cont",
+                        buffer_count: 2,
+                    });
+                    encoder.start();
+                    state_gpu.upload_initial(&mut encoder);
+                    let sp = gpu.submit(&mut encoder);
+                    gpu.wait_for(&sp, !0);
+                    gpu.destroy_command_encoder(&mut encoder);
+
+                    encoder = gpu.create_command_encoder(blade_graphics::CommandEncoderDesc {
+                        name: "circuit_cont2",
+                        buffer_count: 2,
+                    });
+                    encoder.start();
+                }
             }
         }
 
