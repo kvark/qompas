@@ -1536,6 +1536,8 @@ dependencies = [
  "approx",
  "blade-egui",
  "blade-graphics",
+ "blade-macros",
+ "bytemuck",
  "egui",
  "env_logger",
  "log",

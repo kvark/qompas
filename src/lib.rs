@@ -32,9 +32,11 @@
 //! - **Standard format interop**: Parse and export circuits in OpenQASM and
 //!   other established formats.
 
+pub mod backend;
 pub mod circuit;
 pub mod gates;
 pub mod qubit;
 pub mod state;
+pub mod state_gpu;
 pub mod formats;
 pub mod viz;
