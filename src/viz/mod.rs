@@ -38,6 +38,14 @@ pub fn layout_circuit(circuit: &Circuit) -> Vec<GateVisual> {
                 target,
             } => (gate.name.to_string(), vec![*control, *target]),
             Op::Measure { target } => ("M".to_string(), vec![*target]),
+            Op::Oracle { target_state } => {
+                let all_rows: Vec<usize> = (0..circuit.num_qubits).collect();
+                (format!("O|{target_state}⟩"), all_rows)
+            }
+            Op::Diffusion => {
+                let all_rows: Vec<usize> = (0..circuit.num_qubits).collect();
+                ("Diff".to_string(), all_rows)
+            }
         };
 
         let col = rows.iter().map(|&r| wire_horizon[r]).max().unwrap_or(0);

@@ -32,6 +32,7 @@
 //! - **Standard format interop**: Parse and export circuits in OpenQASM and
 //!   other established formats.
 
+pub mod algorithms;
 pub mod backend;
 pub mod circuit;
 pub mod gates;

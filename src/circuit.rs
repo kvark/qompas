@@ -21,6 +21,10 @@ pub enum Op {
     },
     /// Measurement on qubit `target`.
     Measure { target: usize },
+    /// Grover oracle — flip phase of a marked basis state.
+    Oracle { target_state: usize },
+    /// Grover diffusion — reflect about the mean amplitude.
+    Diffusion,
 }
 
 /// A quantum circuit: an ordered list of operations on `n` qubits.
@@ -95,6 +99,14 @@ impl Circuit {
     pub fn swap(&mut self, a: usize, b: usize) -> &mut Self {
         self.add_gate2(gates::swap(), a, b)
     }
+    pub fn oracle(&mut self, target_state: usize) -> &mut Self {
+        self.ops.push(Op::Oracle { target_state });
+        self
+    }
+    pub fn diffusion(&mut self) -> &mut Self {
+        self.ops.push(Op::Diffusion);
+        self
+    }
 
     /// Execute the full circuit and return the final state plus measurement outcomes.
     pub fn run(&self) -> ExecutionResult {
@@ -134,6 +146,12 @@ impl Circuit {
                     let Measurement { outcome, qubit } = state.measure(q);
                     measurements.push((*target, outcome));
                     qubits[*target] = Some(qubit);
+                }
+                Op::Oracle { target_state } => {
+                    crate::algorithms::oracle(&mut state, *target_state);
+                }
+                Op::Diffusion => {
+                    crate::algorithms::diffusion(&mut state);
                 }
             }
         }
