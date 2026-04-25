@@ -81,25 +81,25 @@ impl Backend {
     }
 
     pub fn kind(&self) -> BackendKind {
-        match self {
+        match *self {
             Backend::Cpu { .. } => BackendKind::Cpu,
             Backend::Gpu { .. } => BackendKind::Gpu,
         }
     }
 
     pub fn num_qubits(&self) -> usize {
-        match self {
-            Backend::Cpu { state } => state.num_qubits(),
-            Backend::Gpu { state_cpu, .. } => state_cpu.num_qubits(),
+        match *self {
+            Backend::Cpu { ref state } => state.num_qubits(),
+            Backend::Gpu { ref state_cpu, .. } => state_cpu.num_qubits(),
         }
     }
 
     /// Get the CPU-side state (for visualization). On GPU backend, call
     /// `sync_to_cpu` first to ensure it's up to date.
     pub fn cpu_state(&self) -> &StateVec {
-        match self {
-            Backend::Cpu { state } => state,
-            Backend::Gpu { state_cpu, .. } => state_cpu,
+        match *self {
+            Backend::Cpu { ref state } => state,
+            Backend::Gpu { ref state_cpu, .. } => state_cpu,
         }
     }
 
@@ -149,23 +149,27 @@ impl Backend {
         encoder.start();
 
         for op in &circuit.ops {
-            match op {
-                Op::Gate1 { gate, target } => {
-                    state_gpu.dispatch_gate1(&mut encoder, pipelines, gate, *target);
+            match *op {
+                Op::Gate1 { ref gate, target } => {
+                    state_gpu.dispatch_gate1(&mut encoder, pipelines, gate, target);
                 }
-                Op::Gate2 { gate, control, target } => {
-                    state_gpu.dispatch_gate2(&mut encoder, pipelines, gate, *control, *target);
+                Op::Gate2 {
+                    ref gate,
+                    control,
+                    target,
+                } => {
+                    state_gpu.dispatch_gate2(&mut encoder, pipelines, gate, control, target);
                 }
                 Op::Measure { target } => {
                     // Measurement needs a sync round-trip
-                    state_gpu.dispatch_measure_prob(&mut encoder, pipelines, *target);
+                    state_gpu.dispatch_measure_prob(&mut encoder, pipelines, target);
                     let sp = gpu.submit(&mut encoder);
                     gpu.wait_for(&sp, !0);
                     gpu.destroy_command_encoder(&mut encoder);
 
                     let prob0 = state_gpu.read_prob0(gpu);
                     let outcome = prob0 < 0.5;
-                    measurements.push((*target, outcome));
+                    measurements.push((target, outcome));
 
                     // TODO: dispatch a collapse kernel here.
                     // For now, measurement is approximate (prob only).
@@ -185,13 +189,12 @@ impl Backend {
 
                     let amps_f32 = state_gpu.read_amplitudes(gpu);
                     let mut cpu_state = StateVec::new(num_qubits);
-                    for (i, [re, im]) in amps_f32.iter().enumerate() {
-                        cpu_state.amplitudes[i] =
-                            num_complex::Complex64::new(*re as f64, *im as f64);
+                    for (i, &[re, im]) in amps_f32.iter().enumerate() {
+                        cpu_state.amplitudes[i] = num_complex::Complex64::new(re as f64, im as f64);
                     }
-                    match op {
+                    match *op {
                         Op::Oracle { target_state } => {
-                            crate::algorithms::oracle(&mut cpu_state, *target_state);
+                            crate::algorithms::oracle(&mut cpu_state, target_state);
                         }
                         Op::Diffusion => {
                             crate::algorithms::diffusion(&mut cpu_state);
@@ -233,13 +236,16 @@ impl Backend {
         // Read back to CPU
         let amps_f32 = state_gpu.read_amplitudes(gpu);
         let mut state = StateVec::new(num_qubits);
-        for (i, [re, im]) in amps_f32.iter().enumerate() {
-            state.amplitudes[i] = num_complex::Complex64::new(*re as f64, *im as f64);
+        for (i, &[re, im]) in amps_f32.iter().enumerate() {
+            state.amplitudes[i] = num_complex::Complex64::new(re as f64, im as f64);
         }
 
         state_gpu.destroy(gpu);
 
-        ExecutionResult { state, measurements }
+        ExecutionResult {
+            state,
+            measurements,
+        }
     }
 }
 

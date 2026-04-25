@@ -67,8 +67,7 @@ pub fn oracle(state: &mut StateVec, target: usize) {
 /// This amplifies the amplitude of the marked state.
 pub fn diffusion(state: &mut StateVec) {
     let dim = state.amplitudes.len();
-    let mean: Complex64 =
-        state.amplitudes.iter().copied().sum::<Complex64>() / dim as f64;
+    let mean: Complex64 = state.amplitudes.iter().copied().sum::<Complex64>() / dim as f64;
     for a in state.amplitudes.iter_mut() {
         *a = 2.0 * mean - *a;
     }

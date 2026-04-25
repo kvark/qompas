@@ -4,7 +4,7 @@
 //! can step through execution one gate at a time, or run the whole thing.
 
 use crate::circuit::{Circuit, Op};
-use crate::qubit::{Qubit, QubitPair, Measurement};
+use crate::qubit::{Measurement, Qubit, QubitPair};
 use crate::state::StateVec;
 
 /// Execution mode.
@@ -73,29 +73,31 @@ impl ExecController {
         }
 
         let op = &circuit.ops[self.step];
-        match op {
-            Op::Gate1 { gate, target } => {
-                let q = self.qubits[*target]
-                    .take()
-                    .expect("qubit consumed");
+        match *op {
+            Op::Gate1 { ref gate, target } => {
+                let q = self.qubits[target].take().expect("qubit consumed");
                 let q_new = self.state.apply1(gate, q);
-                self.qubits[*target] = Some(q_new);
+                self.qubits[target] = Some(q_new);
             }
-            Op::Gate2 { gate, control, target } => {
-                let qc = self.qubits[*control].take().expect("control consumed");
-                let qt = self.qubits[*target].take().expect("target consumed");
+            Op::Gate2 {
+                ref gate,
+                control,
+                target,
+            } => {
+                let qc = self.qubits[control].take().expect("control consumed");
+                let qt = self.qubits[target].take().expect("target consumed");
                 let QubitPair(qc_new, qt_new) = self.state.apply2(gate, qc, qt);
-                self.qubits[*control] = Some(qc_new);
-                self.qubits[*target] = Some(qt_new);
+                self.qubits[control] = Some(qc_new);
+                self.qubits[target] = Some(qt_new);
             }
             Op::Measure { target } => {
-                let q = self.qubits[*target].take().expect("qubit consumed");
+                let q = self.qubits[target].take().expect("qubit consumed");
                 let Measurement { outcome, qubit } = self.state.measure(q);
-                self.measurements.push((*target, outcome));
-                self.qubits[*target] = Some(qubit);
+                self.measurements.push((target, outcome));
+                self.qubits[target] = Some(qubit);
             }
             Op::Oracle { target_state } => {
-                crate::algorithms::oracle(&mut self.state, *target_state);
+                crate::algorithms::oracle(&mut self.state, target_state);
             }
             Op::Diffusion => {
                 crate::algorithms::diffusion(&mut self.state);
@@ -130,10 +132,7 @@ impl ExecController {
                 changed = true;
             }
 
-            let step_btn = ui.add_enabled(
-                !self.is_done(circuit),
-                egui::Button::new("⏭ Step"),
-            );
+            let step_btn = ui.add_enabled(!self.is_done(circuit), egui::Button::new("⏭ Step"));
             if step_btn.clicked() {
                 self.mode = PlayMode::Paused;
                 changed = self.step_forward(circuit);
@@ -151,17 +150,14 @@ impl ExecController {
             }
 
             ui.separator();
-            ui.label(format!(
-                "Step {}/{}",
-                self.step,
-                circuit.ops.len()
-            ));
+            ui.label(format!("Step {}/{}", self.step, circuit.ops.len()));
 
             if !self.measurements.is_empty() {
                 ui.separator();
-                let bits: String = self.measurements
+                let bits: String = self
+                    .measurements
                     .iter()
-                    .map(|(q, v)| format!("q{}={}", q, *v as u8))
+                    .map(|&(q, v)| format!("q{}={}", q, v as u8))
                     .collect::<Vec<_>>()
                     .join(" ");
                 ui.label(format!("Measured: {bits}"));

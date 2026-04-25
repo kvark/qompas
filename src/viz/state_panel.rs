@@ -47,11 +47,7 @@ pub fn state_panel_ui(ui: &mut egui::Ui, state: &StateVec) {
     let dim = 1 << n;
     let amps = state.amplitudes();
 
-    ui.label(
-        egui::RichText::new("State amplitudes")
-            .strong()
-            .size(14.0),
-    );
+    ui.label(egui::RichText::new("State amplitudes").strong().size(14.0));
     ui.add_space(4.0);
 
     // Phase legend
@@ -78,8 +74,7 @@ pub fn state_panel_ui(ui: &mut egui::Ui, state: &StateVec) {
 
     let baseline_y = origin.y + BAR_MAX_HEIGHT;
 
-    for i in 0..dim {
-        let amp = amps[i];
+    for (i, &amp) in amps.iter().enumerate().take(dim) {
         let prob = amp.norm_sqr();
         let bar_h = prob as f32 * BAR_MAX_HEIGHT;
         let x = origin.x + i as f32 * (BAR_WIDTH + BAR_GAP);

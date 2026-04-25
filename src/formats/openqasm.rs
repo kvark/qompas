@@ -26,11 +26,27 @@ use nom::{
 enum Stmt {
     Header,
     Include,
-    QReg { _name: String, size: usize },
-    CReg { _name: String, _size: usize },
-    Gate1 { name: String, target: usize },
-    Gate2 { name: String, control: usize, target: usize },
-    Measure { qubit: usize, _bit: usize },
+    QReg {
+        _name: String,
+        size: usize,
+    },
+    CReg {
+        _name: String,
+        _size: usize,
+    },
+    Gate1 {
+        name: String,
+        target: usize,
+    },
+    Gate2 {
+        name: String,
+        control: usize,
+        target: usize,
+    },
+    Measure {
+        qubit: usize,
+        _bit: usize,
+    },
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -180,8 +196,8 @@ pub fn parse(source: &str) -> Result<Circuit, String> {
     // Find qreg to determine qubit count.
     let num_qubits = stmts
         .iter()
-        .filter_map(|s| match s {
-            Stmt::QReg { size, .. } => Some(*size),
+        .filter_map(|s| match *s {
+            Stmt::QReg { size, .. } => Some(size),
             _ => None,
         })
         .sum();
@@ -193,28 +209,46 @@ pub fn parse(source: &str) -> Result<Circuit, String> {
     let mut circuit = Circuit::new(num_qubits);
 
     for stmt in &stmts {
-        match stmt {
-            Stmt::Gate1 { name, target } => match name.as_str() {
-                "h" => { circuit.h(*target); }
-                "x" => { circuit.x(*target); }
-                "y" => { circuit.y(*target); }
-                "z" => { circuit.z(*target); }
-                "s" => { circuit.s(*target); }
-                "t" => { circuit.t(*target); }
+        match *stmt {
+            Stmt::Gate1 { ref name, target } => match name.as_str() {
+                "h" => {
+                    circuit.h(target);
+                }
+                "x" => {
+                    circuit.x(target);
+                }
+                "y" => {
+                    circuit.y(target);
+                }
+                "z" => {
+                    circuit.z(target);
+                }
+                "s" => {
+                    circuit.s(target);
+                }
+                "t" => {
+                    circuit.t(target);
+                }
                 other => return Err(format!("unknown gate: {other}")),
             },
             Stmt::Gate2 {
-                name,
+                ref name,
                 control,
                 target,
             } => match name.as_str() {
-                "cx" => { circuit.cnot(*control, *target); }
-                "cz" => { circuit.cz(*control, *target); }
-                "swap" => { circuit.swap(*control, *target); }
+                "cx" => {
+                    circuit.cnot(control, target);
+                }
+                "cz" => {
+                    circuit.cz(control, target);
+                }
+                "swap" => {
+                    circuit.swap(control, target);
+                }
                 other => return Err(format!("unknown gate: {other}")),
             },
             Stmt::Measure { qubit, .. } => {
-                circuit.add_measure(*qubit);
+                circuit.add_measure(qubit);
             }
             _ => {}
         }

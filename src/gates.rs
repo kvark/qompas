@@ -143,8 +143,5 @@ pub fn cz() -> Gate2 {
         o, o, i, o,
         o, o, o, m,
     ];
-    Gate2 {
-        name: "CZ",
-        matrix,
-    }
+    Gate2 { name: "CZ", matrix }
 }

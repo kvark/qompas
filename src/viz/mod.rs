@@ -30,14 +30,14 @@ pub fn layout_circuit(circuit: &Circuit) -> Vec<GateVisual> {
     let mut visuals = Vec::with_capacity(circuit.ops.len());
 
     for op in &circuit.ops {
-        let (label, rows) = match op {
-            Op::Gate1 { gate, target } => (gate.name.to_string(), vec![*target]),
+        let (label, rows) = match *op {
+            Op::Gate1 { ref gate, target } => (gate.name.to_string(), vec![target]),
             Op::Gate2 {
-                gate,
+                ref gate,
                 control,
                 target,
-            } => (gate.name.to_string(), vec![*control, *target]),
-            Op::Measure { target } => ("M".to_string(), vec![*target]),
+            } => (gate.name.to_string(), vec![control, target]),
+            Op::Measure { target } => ("M".to_string(), vec![target]),
             Op::Oracle { target_state } => {
                 let all_rows: Vec<usize> = (0..circuit.num_qubits).collect();
                 (format!("O|{target_state}⟩"), all_rows)

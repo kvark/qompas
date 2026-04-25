@@ -89,10 +89,10 @@ impl StateVec {
             ];
 
             for (row, idx) in [(0, i00), (1, i01), (2, i10), (3, i11)] {
-                self.amplitudes[idx] = gate.matrix[row * 4]     * a[0]
-                                     + gate.matrix[row * 4 + 1] * a[1]
-                                     + gate.matrix[row * 4 + 2] * a[2]
-                                     + gate.matrix[row * 4 + 3] * a[3];
+                self.amplitudes[idx] = gate.matrix[row * 4] * a[0]
+                    + gate.matrix[row * 4 + 1] * a[1]
+                    + gate.matrix[row * 4 + 2] * a[2]
+                    + gate.matrix[row * 4 + 3] * a[3];
             }
         }
         QubitPair(Qubit::new(t0), Qubit::new(t1))
