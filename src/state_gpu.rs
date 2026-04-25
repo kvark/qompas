@@ -163,7 +163,7 @@ impl StateGpu {
             memory: blade_graphics::Memory::Shared,
         });
 
-        let reduce_groups = ((dim + WORKGROUP_SIZE as u64 - 1) / WORKGROUP_SIZE as u64) as u32;
+        let reduce_groups = dim.div_ceil(WORKGROUP_SIZE as u64) as u32;
         let reduce_bytes = reduce_groups as u64 * 4; // f32 per workgroup
 
         let reduce_buffer = gpu.create_buffer(blade_graphics::BufferDesc {
@@ -199,33 +199,19 @@ impl StateGpu {
     }
 
     /// Upload initial state from staging → device.
-    pub fn upload_initial(
-        &self,
-        encoder: &mut blade_graphics::CommandEncoder,
-    ) {
+    pub fn upload_initial(&self, encoder: &mut blade_graphics::CommandEncoder) {
         let dim = 1u64 << self.num_qubits;
         let size = dim * 8;
         let mut transfer = encoder.transfer("upload_amps");
-        transfer.copy_buffer_to_buffer(
-            self.staging_buffer.into(),
-            self.amp_buffer.into(),
-            size,
-        );
+        transfer.copy_buffer_to_buffer(self.staging_buffer.into(), self.amp_buffer.into(), size);
     }
 
     /// Download amplitudes from device → staging for CPU readback.
-    pub fn download(
-        &self,
-        encoder: &mut blade_graphics::CommandEncoder,
-    ) {
+    pub fn download(&self, encoder: &mut blade_graphics::CommandEncoder) {
         let dim = 1u64 << self.num_qubits;
         let size = dim * 8;
         let mut transfer = encoder.transfer("download_amps");
-        transfer.copy_buffer_to_buffer(
-            self.amp_buffer.into(),
-            self.staging_buffer.into(),
-            size,
-        );
+        transfer.copy_buffer_to_buffer(self.amp_buffer.into(), self.staging_buffer.into(), size);
     }
 
     /// Get the raw pointer to the staging buffer for direct writes.
@@ -258,7 +244,7 @@ impl StateGpu {
         target: usize,
     ) {
         let num_pairs = (1u32 << self.num_qubits) >> 1;
-        let groups = (num_pairs + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
+        let groups = num_pairs.div_ceil(WORKGROUP_SIZE);
 
         let m = &gate.matrix;
         let params = Gate1Params {
@@ -294,11 +280,11 @@ impl StateGpu {
         qubit1: usize,
     ) {
         let num_quads = (1u32 << self.num_qubits) >> 2;
-        let groups = (num_quads + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
+        let groups = num_quads.div_ceil(WORKGROUP_SIZE);
 
         let mut m = [[0.0f32; 2]; 16];
-        for i in 0..16 {
-            m[i] = [gate.matrix[i].re as f32, gate.matrix[i].im as f32];
+        for (i, slot) in m.iter_mut().enumerate() {
+            *slot = [gate.matrix[i].re as f32, gate.matrix[i].im as f32];
         }
 
         let params = Gate2Params {
@@ -331,7 +317,7 @@ impl StateGpu {
         target: usize,
     ) {
         let num_states = 1u32 << self.num_qubits;
-        let groups = (num_states + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
+        let groups = num_states.div_ceil(WORKGROUP_SIZE);
 
         let params = MeasureParams {
             target_bit: 1u32 << target,

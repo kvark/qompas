@@ -55,8 +55,7 @@ fn run_windowed() {
                 validation: cfg!(debug_assertions),
                 ..Default::default()
             };
-            let gpu = unsafe { blade_graphics::Context::init(ctx_desc) }
-                .expect("init GPU context");
+            let gpu = unsafe { blade_graphics::Context::init(ctx_desc) }.expect("init GPU context");
 
             let size = window.inner_size();
             self.window_size = (size.width, size.height);
@@ -136,11 +135,7 @@ fn run_windowed() {
                         });
                     encoder.start();
 
-                    gui_painter.update_textures(
-                        &mut encoder,
-                        &full_output.textures_delta,
-                        gpu,
-                    );
+                    gui_painter.update_textures(&mut encoder, &full_output.textures_delta, gpu);
 
                     {
                         let mut pass = encoder.render(

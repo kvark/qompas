@@ -157,7 +157,11 @@ impl CircuitPanel {
                 painter.line_segment([p0, p1], Stroke::new(2.0, Color32::from_rgb(100, 180, 255)));
                 let rect2 = Rect::from_center_size(p1, Vec2::splat(GATE_SIZE));
                 painter.rect_filled(rect2, 4.0, Color32::from_rgb(40, 60, 90));
-                painter.rect_stroke(rect2, 4.0, Stroke::new(1.0, Color32::from_rgb(100, 180, 255)));
+                painter.rect_stroke(
+                    rect2,
+                    4.0,
+                    Stroke::new(1.0, Color32::from_rgb(100, 180, 255)),
+                );
                 painter.text(
                     p1,
                     egui::Align2::CENTER_CENTER,
@@ -176,7 +180,11 @@ impl CircuitPanel {
                 Color32::from_rgb(40, 50, 80)
             };
             painter.rect_filled(rect, 4.0, bg);
-            painter.rect_stroke(rect, 4.0, Stroke::new(1.0, Color32::from_rgb(100, 160, 255)));
+            painter.rect_stroke(
+                rect,
+                4.0,
+                Stroke::new(1.0, Color32::from_rgb(100, 160, 255)),
+            );
             painter.text(
                 center,
                 egui::Align2::CENTER_CENTER,
@@ -213,7 +221,11 @@ impl CircuitPanel {
         // ── Draw drag ghost ─────────────────────────────────────
         if let Some(ref drag) = self.drag {
             let ghost_rect = Rect::from_center_size(drag.pos, Vec2::splat(GATE_SIZE));
-            painter.rect_filled(ghost_rect, 4.0, Color32::from_rgba_unmultiplied(60, 80, 140, 180));
+            painter.rect_filled(
+                ghost_rect,
+                4.0,
+                Color32::from_rgba_unmultiplied(60, 80, 140, 180),
+            );
             painter.text(
                 drag.pos,
                 egui::Align2::CENTER_CENTER,
@@ -229,25 +241,49 @@ impl CircuitPanel {
     /// Place a gate from the palette onto the circuit at the given qubit row.
     fn place_gate(&mut self, name: &str, row: usize) -> bool {
         match name {
-            "H" => { self.circuit.h(row); }
-            "X" => { self.circuit.x(row); }
-            "Y" => { self.circuit.y(row); }
-            "Z" => { self.circuit.z(row); }
-            "S" => { self.circuit.s(row); }
-            "T" => { self.circuit.t(row); }
+            "H" => {
+                self.circuit.h(row);
+            }
+            "X" => {
+                self.circuit.x(row);
+            }
+            "Y" => {
+                self.circuit.y(row);
+            }
+            "Z" => {
+                self.circuit.z(row);
+            }
+            "S" => {
+                self.circuit.s(row);
+            }
+            "T" => {
+                self.circuit.t(row);
+            }
             "CNOT" | "CZ" | "SWAP" => {
-                let target = if row + 1 < self.circuit.num_qubits { row + 1 } else { 0 };
+                let target = if row + 1 < self.circuit.num_qubits {
+                    row + 1
+                } else {
+                    0
+                };
                 if target == row {
                     return false;
                 }
                 match name {
-                    "CNOT" => { self.circuit.cnot(row, target); }
-                    "CZ" => { self.circuit.cz(row, target); }
-                    "SWAP" => { self.circuit.swap(row, target); }
+                    "CNOT" => {
+                        self.circuit.cnot(row, target);
+                    }
+                    "CZ" => {
+                        self.circuit.cz(row, target);
+                    }
+                    "SWAP" => {
+                        self.circuit.swap(row, target);
+                    }
                     _ => unreachable!(),
                 }
             }
-            "M" => { self.circuit.add_measure(row); }
+            "M" => {
+                self.circuit.add_measure(row);
+            }
             _ => return false,
         }
         self.refresh_layout();

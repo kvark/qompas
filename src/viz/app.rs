@@ -16,7 +16,7 @@ pub enum Preset {
 
 impl Preset {
     pub fn build(&self) -> Circuit {
-        match self {
+        match *self {
             Preset::Bell => {
                 let mut c = Circuit::new(2);
                 c.h(0).cnot(0, 1);
@@ -56,7 +56,7 @@ impl Preset {
                 }
                 c
             }
-            Preset::Empty(n) => Circuit::new(*n),
+            Preset::Empty(n) => Circuit::new(n),
         }
     }
 }
@@ -173,7 +173,12 @@ mod tests {
 
     #[test]
     fn presets_build_valid_circuits() {
-        for preset in [Preset::Bell, Preset::Ghz3, Preset::Teleportation, Preset::Empty(4)] {
+        for preset in [
+            Preset::Bell,
+            Preset::Ghz3,
+            Preset::Teleportation,
+            Preset::Empty(4),
+        ] {
             let c = preset.build();
             let result = c.run();
             let probs = result.state.probabilities();

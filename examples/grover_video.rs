@@ -185,7 +185,14 @@ fn draw_text(canvas: &mut Canvas, text: &str, x: usize, y: usize, color: [u8; 3]
 }
 
 /// Centered text drawing.
-fn draw_text_centered(canvas: &mut Canvas, text: &str, cx: usize, y: usize, color: [u8; 3], scale: usize) {
+fn draw_text_centered(
+    canvas: &mut Canvas,
+    text: &str,
+    cx: usize,
+    y: usize,
+    color: [u8; 3],
+    scale: usize,
+) {
     let w = text.len() * 6 * scale;
     let x = cx.saturating_sub(w / 2);
     draw_text(canvas, text, x, y, color, scale);
@@ -254,8 +261,7 @@ fn render_frame(
     }
 
     // Bars
-    for i in 0..dim {
-        let amp = amps[i];
+    for (i, &amp) in amps.iter().enumerate().take(dim) {
         let prob = amp.norm_sqr();
         let bar_h = (prob * bar_area_height as f64) as usize;
         let x = BAR_AREA_LEFT + i * (bar_w + BAR_GAP);
@@ -271,7 +277,13 @@ fn render_frame(
 
         // Target state gets a golden outline
         if i == target_state && prob > 0.01 {
-            canvas.stroke_rect(x.saturating_sub(1), y.saturating_sub(1), bar_w + 2, bar_h + 2, TARGET_GLOW);
+            canvas.stroke_rect(
+                x.saturating_sub(1),
+                y.saturating_sub(1),
+                bar_w + 2,
+                bar_h + 2,
+                TARGET_GLOW,
+            );
         }
 
         // Probability label above bar (only if > 1%)
@@ -353,23 +365,36 @@ fn main() {
     let num_transitions = snapshots.len() - 1;
     let total_frames =
         HOLD_FRAMES + num_transitions * (TRANSITION_FRAMES + HOLD_FRAMES) + HOLD_FRAMES;
-    println!("Total frames: {total_frames} ({:.1}s at {FPS}fps)", total_frames as f64 / FPS as f64);
+    println!(
+        "Total frames: {total_frames} ({:.1}s at {FPS}fps)",
+        total_frames as f64 / FPS as f64
+    );
 
     // Launch ffmpeg
     let output_path = "grover.mp4";
     let mut ffmpeg = Command::new("ffmpeg")
         .args([
             "-y",
-            "-f", "rawvideo",
-            "-pix_fmt", "rgb24",
-            "-s", &format!("{WIDTH}x{HEIGHT}"),
-            "-r", &FPS.to_string(),
-            "-i", "pipe:0",
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-crf", "18",
-            "-pix_fmt", "yuv420p",
-            "-movflags", "+faststart",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            "-s",
+            &format!("{WIDTH}x{HEIGHT}"),
+            "-r",
+            &FPS.to_string(),
+            "-i",
+            "pipe:0",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "medium",
+            "-crf",
+            "18",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "+faststart",
             output_path,
         ])
         .stdin(Stdio::piped())
@@ -413,26 +438,50 @@ fn main() {
             let interp = lerp_amps(amps_a, amps_b, t);
 
             // Show destination labels during transition
-            render_frame(&mut canvas, &interp, num_qubits, target_state, title_b, sub_b);
+            render_frame(
+                &mut canvas,
+                &interp,
+                num_qubits,
+                target_state,
+                title_b,
+                sub_b,
+            );
             stdin.write_all(&canvas.pixels).unwrap();
             frames_written += 1;
         }
 
         // Hold at destination
-        render_frame(&mut canvas, amps_b, num_qubits, target_state, title_b, sub_b);
+        render_frame(
+            &mut canvas,
+            amps_b,
+            num_qubits,
+            target_state,
+            title_b,
+            sub_b,
+        );
         write_hold(stdin, &canvas, HOLD_FRAMES, &mut frames_written);
     }
 
     // Extra hold at the end
     let last = snapshots.last().unwrap();
-    render_frame(&mut canvas, &last.0, num_qubits, target_state, &last.1, &last.2);
+    render_frame(
+        &mut canvas,
+        &last.0,
+        num_qubits,
+        target_state,
+        &last.1,
+        &last.2,
+    );
     write_hold(stdin, &canvas, HOLD_FRAMES, &mut frames_written);
 
     drop(ffmpeg.stdin.take());
     let output = ffmpeg.wait_with_output().expect("ffmpeg failed");
 
     if output.status.success() {
-        println!("Wrote {output_path} ({frames_written} frames, {:.1}s)", frames_written as f64 / FPS as f64);
+        println!(
+            "Wrote {output_path} ({frames_written} frames, {:.1}s)",
+            frames_written as f64 / FPS as f64
+        );
     } else {
         eprintln!("ffmpeg error: {}", String::from_utf8_lossy(&output.stderr));
         std::process::exit(1);

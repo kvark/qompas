@@ -59,6 +59,6 @@ mod tests {
         // The real compile-time check is in the doc-test above.
         let q = Qubit::new(0);
         let _q2 = q; // moves
-        // q is no longer accessible here
+                     // q is no longer accessible here
     }
 }

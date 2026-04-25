@@ -116,39 +116,39 @@ impl Circuit {
         let mut qubits: Vec<Option<Qubit>> = state.qubits().into_iter().map(Some).collect();
 
         for op in &self.ops {
-            match op {
-                Op::Gate1 { gate, target } => {
-                    let q = qubits[*target]
+            match *op {
+                Op::Gate1 { ref gate, target } => {
+                    let q = qubits[target]
                         .take()
                         .expect("qubit already consumed or measured");
                     let q_new = state.apply1(gate, q);
-                    qubits[*target] = Some(q_new);
+                    qubits[target] = Some(q_new);
                 }
                 Op::Gate2 {
-                    gate,
+                    ref gate,
                     control,
                     target,
                 } => {
-                    let qc = qubits[*control]
+                    let qc = qubits[control]
                         .take()
                         .expect("control qubit already consumed");
-                    let qt = qubits[*target]
+                    let qt = qubits[target]
                         .take()
                         .expect("target qubit already consumed");
                     let QubitPair(qc_new, qt_new) = state.apply2(gate, qc, qt);
-                    qubits[*control] = Some(qc_new);
-                    qubits[*target] = Some(qt_new);
+                    qubits[control] = Some(qc_new);
+                    qubits[target] = Some(qt_new);
                 }
                 Op::Measure { target } => {
-                    let q = qubits[*target]
+                    let q = qubits[target]
                         .take()
                         .expect("qubit already consumed or measured");
                     let Measurement { outcome, qubit } = state.measure(q);
-                    measurements.push((*target, outcome));
-                    qubits[*target] = Some(qubit);
+                    measurements.push((target, outcome));
+                    qubits[target] = Some(qubit);
                 }
                 Op::Oracle { target_state } => {
-                    crate::algorithms::oracle(&mut state, *target_state);
+                    crate::algorithms::oracle(&mut state, target_state);
                 }
                 Op::Diffusion => {
                     crate::algorithms::diffusion(&mut state);
