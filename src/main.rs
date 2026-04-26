@@ -161,6 +161,7 @@ fn run_windowed() {
                     encoder.present(frame);
                     let sync = gpu.submit(&mut encoder);
                     gui_painter.after_submit(&sync);
+                    gpu.wait_for(&sync, !0);
                     gpu.destroy_command_encoder(&mut encoder);
 
                     if let Some(ref w) = self.window {
