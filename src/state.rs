@@ -55,8 +55,8 @@ impl StateVec {
             let j = i | bit;
             let a0 = self.amplitudes[i];
             let a1 = self.amplitudes[j];
-            self.amplitudes[i] = gate.matrix[(0, 0)] * a0 + gate.matrix[(0, 1)] * a1;
-            self.amplitudes[j] = gate.matrix[(1, 0)] * a0 + gate.matrix[(1, 1)] * a1;
+            self.amplitudes[i] = gate.matrix.x.x * a0 + gate.matrix.x.y * a1;
+            self.amplitudes[j] = gate.matrix.y.x * a0 + gate.matrix.y.y * a1;
         }
         Qubit::new(target)
     }

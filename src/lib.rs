@@ -6,7 +6,8 @@
     clippy::new_without_default,
     clippy::single_match,
     clippy::vec_init_then_push,
-    clippy::missing_safety_doc
+    clippy::missing_safety_doc,
+    clippy::large_enum_variant
 )]
 #![warn(
     trivial_numeric_casts,

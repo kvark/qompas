@@ -90,45 +90,46 @@ impl QompasApp {
     }
 
     /// Main UI — call this from the egui frame callback.
+    #[allow(deprecated)] // Panel::show is deprecated but show_inside requires &mut Ui, not &Context
     pub fn ui(&mut self, ctx: &egui::Context) {
         let dt = ctx.input(|i| i.stable_dt);
 
         // ── Top menu bar ────────────────────────────────────────
-        egui::TopBottomPanel::top("menu").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+        egui::Panel::top("menu").show(ctx, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("New (2 qubits)").clicked() {
                         self.load_preset(Preset::Empty(2));
-                        ui.close_menu();
+                        ui.close();
                     }
                     if ui.button("New (3 qubits)").clicked() {
                         self.load_preset(Preset::Empty(3));
-                        ui.close_menu();
+                        ui.close();
                     }
                 });
                 ui.menu_button("Presets", |ui| {
                     if ui.button("Bell state").clicked() {
                         self.load_preset(Preset::Bell);
-                        ui.close_menu();
+                        ui.close();
                     }
                     if ui.button("GHZ (3 qubits)").clicked() {
                         self.load_preset(Preset::Ghz3);
-                        ui.close_menu();
+                        ui.close();
                     }
                     if ui.button("Teleportation").clicked() {
                         self.load_preset(Preset::Teleportation);
-                        ui.close_menu();
+                        ui.close();
                     }
                     if ui.button("Grover (4 qubits)").clicked() {
                         self.load_preset(Preset::Grover4);
-                        ui.close_menu();
+                        ui.close();
                     }
                 });
             });
         });
 
         // ── Bottom panel: execution controls ────────────────────
-        egui::TopBottomPanel::bottom("controls").show(ctx, |ui| {
+        egui::Panel::bottom("controls").show(ctx, |ui| {
             let ctrl_changed = self.exec.ui(ui, &self.circuit_panel.circuit);
             if ctrl_changed {
                 self.needs_re_exec = false;
@@ -136,8 +137,8 @@ impl QompasApp {
         });
 
         // ── Left panel: circuit editor ──────────────────────────
-        egui::SidePanel::left("circuit")
-            .default_width(400.0)
+        egui::Panel::left("circuit")
+            .default_size(400.0)
             .show(ctx, |ui| {
                 ui.heading("Circuit");
                 egui::ScrollArea::both().show(ui, |ui| {

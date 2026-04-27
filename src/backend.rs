@@ -136,7 +136,7 @@ impl Backend {
         encoder.start();
         state_gpu.upload_initial(&mut encoder);
         let sp = gpu.submit(&mut encoder);
-        gpu.wait_for(&sp, !0);
+        let _ = gpu.wait_for(&sp, !0);
         gpu.destroy_command_encoder(&mut encoder);
 
         let mut measurements = Vec::new();
@@ -164,7 +164,7 @@ impl Backend {
                     // Measurement needs a sync round-trip
                     state_gpu.dispatch_measure_prob(&mut encoder, pipelines, target);
                     let sp = gpu.submit(&mut encoder);
-                    gpu.wait_for(&sp, !0);
+                    let _ = gpu.wait_for(&sp, !0);
                     gpu.destroy_command_encoder(&mut encoder);
 
                     let prob0 = state_gpu.read_prob0(gpu);
@@ -184,7 +184,7 @@ impl Backend {
                     // These n-qubit ops need CPU fallback — download, apply, re-upload
                     state_gpu.download(&mut encoder);
                     let sp = gpu.submit(&mut encoder);
-                    gpu.wait_for(&sp, !0);
+                    let _ = gpu.wait_for(&sp, !0);
                     gpu.destroy_command_encoder(&mut encoder);
 
                     let amps_f32 = state_gpu.read_amplitudes(gpu);
@@ -215,7 +215,7 @@ impl Backend {
                     encoder.start();
                     state_gpu.upload_initial(&mut encoder);
                     let sp = gpu.submit(&mut encoder);
-                    gpu.wait_for(&sp, !0);
+                    let _ = gpu.wait_for(&sp, !0);
                     gpu.destroy_command_encoder(&mut encoder);
 
                     encoder = gpu.create_command_encoder(blade_graphics::CommandEncoderDesc {
@@ -230,7 +230,7 @@ impl Backend {
         // Download final state
         state_gpu.download(&mut encoder);
         let sp = gpu.submit(&mut encoder);
-        gpu.wait_for(&sp, !0);
+        let _ = gpu.wait_for(&sp, !0);
         gpu.destroy_command_encoder(&mut encoder);
 
         // Read back to CPU

@@ -35,6 +35,7 @@ fn run_windowed() {
         surface: Option<blade_graphics::Surface>,
         gui_painter: Option<blade_egui::GuiPainter>,
         egui_ctx: egui::Context,
+        egui_winit: Option<egui_winit::State>,
         app: QompasApp,
         window_size: (u32, u32),
     }
@@ -77,6 +78,15 @@ fn run_windowed() {
             let surface_info = surface.info();
             let gui_painter = blade_egui::GuiPainter::new(surface_info, &gpu);
 
+            let egui_winit = egui_winit::State::new(
+                self.egui_ctx.clone(),
+                egui::ViewportId::ROOT,
+                &window,
+                None,
+                None,
+                None,
+            );
+
             log::info!(
                 "Qompas launched. GPU: {}",
                 gpu.device_information().device_name
@@ -86,6 +96,7 @@ fn run_windowed() {
             self.gpu = Some(gpu);
             self.surface = Some(surface);
             self.gui_painter = Some(gui_painter);
+            self.egui_winit = Some(egui_winit);
         }
 
         fn window_event(
@@ -94,6 +105,16 @@ fn run_windowed() {
             _window_id: winit::window::WindowId,
             event: WindowEvent,
         ) {
+            // Forward events to egui before our own handling
+            if let Some(ref mut egui_winit) = self.egui_winit {
+                if let Some(ref window) = self.window {
+                    let response = egui_winit.on_window_event(window, &event);
+                    if response.consumed {
+                        return;
+                    }
+                }
+            }
+
             let gpu = self.gpu.as_ref().unwrap();
             let surface = self.surface.as_mut().unwrap();
             let gui_painter = self.gui_painter.as_mut().unwrap();
@@ -117,11 +138,16 @@ fn run_windowed() {
                     gpu.reconfigure_surface(surface, config);
                 }
                 WindowEvent::RedrawRequested => {
-                    // Run egui frame
-                    let raw_input = egui::RawInput::default();
-                    let full_output = self.egui_ctx.run(raw_input, |ctx| {
-                        self.app.ui(ctx);
+                    let window = self.window.as_ref().unwrap();
+                    let egui_winit = self.egui_winit.as_mut().unwrap();
+
+                    // Gather input from winit and run egui
+                    let raw_input = egui_winit.take_egui_input(window);
+                    let full_output = self.egui_ctx.run_ui(raw_input, |ui| {
+                        self.app.ui(ui.ctx());
                     });
+                    egui_winit.handle_platform_output(window, full_output.platform_output.clone());
+
                     let paint_jobs = self
                         .egui_ctx
                         .tessellate(full_output.shapes, self.egui_ctx.pixels_per_point());
@@ -134,6 +160,7 @@ fn run_windowed() {
                             buffer_count: 2,
                         });
                     encoder.start();
+                    encoder.init_texture(frame.texture());
 
                     gui_painter.update_textures(&mut encoder, &full_output.textures_delta, gpu);
 
@@ -153,7 +180,7 @@ fn run_windowed() {
                         );
                         let sd = blade_egui::ScreenDescriptor {
                             physical_size: self.window_size,
-                            scale_factor: 1.0,
+                            scale_factor: self.egui_ctx.pixels_per_point(),
                         };
                         gui_painter.paint(&mut pass, &paint_jobs, &sd, gpu);
                     }
@@ -161,7 +188,7 @@ fn run_windowed() {
                     encoder.present(frame);
                     let sync = gpu.submit(&mut encoder);
                     gui_painter.after_submit(&sync);
-                    gpu.wait_for(&sync, !0);
+                    let _ = gpu.wait_for(&sync, !0);
                     gpu.destroy_command_encoder(&mut encoder);
 
                     if let Some(ref w) = self.window {
@@ -180,14 +207,22 @@ fn run_windowed() {
         surface: None,
         gui_painter: None,
         egui_ctx: egui::Context::default(),
+        egui_winit: None,
         app: QompasApp::new(),
         window_size: (1200, 700),
     };
     event_loop.run_app(&mut harness).expect("event loop");
 
-    // Cleanup
-    if let (Some(ref gpu), Some(ref mut painter)) = (&harness.gpu, &mut harness.gui_painter) {
-        painter.destroy(gpu);
+    // Cleanup: order matters — drop egui_winit (clipboard worker) before
+    // the window, so Wayland objects are released while the connection is live.
+    drop(harness.egui_winit.take());
+    if let Some(ref gpu) = harness.gpu {
+        if let Some(ref mut painter) = harness.gui_painter {
+            painter.destroy(gpu);
+        }
+        if let Some(ref mut surface) = harness.surface {
+            gpu.destroy_surface(surface);
+        }
     }
 }
 

@@ -7,15 +7,14 @@ license = "MIT"
 
 [dependencies]
 # GPU-accelerated rendering
-blade-graphics = "0.6"
-blade-egui = "0.6"
+blade-graphics = "0.8.4"
+blade-egui = "0.8.1"
 blade-macros = "0.3"
-# Immediate-mode UI for interactive exploration (0.29 to match blade-egui 0.6)
-egui = "0.29"
+egui = "0.34"
+egui-winit = "0.34"
 # Serialization helpers for shader data
 bytemuck = { version = "1", features = ["derive"] }
-# Math essentials for quantum state simulation
-nalgebra = { version = "0.33", features = ["std"] }
+mint = "0.5"
 num-complex = "0.4"
 # Circuit format parsing (OpenQASM)
 nom = "7"

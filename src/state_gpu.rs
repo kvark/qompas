@@ -81,6 +81,7 @@ impl QuantumPipelines {
     pub fn new(gpu: &blade_graphics::Context) -> Self {
         let shader = gpu.create_shader(blade_graphics::ShaderDesc {
             source: SHADER_SOURCE,
+            naga_module: None,
         });
 
         let gate1_layout = <Gate1Data as blade_graphics::ShaderData>::layout();
@@ -89,6 +90,7 @@ impl QuantumPipelines {
             data_layouts: &[&gate1_layout],
             compute: blade_graphics::ShaderFunction {
                 shader: &shader,
+                constants: &Default::default(),
                 entry_point: "apply_gate1",
             },
         });
@@ -99,6 +101,7 @@ impl QuantumPipelines {
             data_layouts: &[&gate2_layout],
             compute: blade_graphics::ShaderFunction {
                 shader: &shader,
+                constants: &Default::default(),
                 entry_point: "apply_gate2",
             },
         });
@@ -109,6 +112,7 @@ impl QuantumPipelines {
             data_layouts: &[&measure_layout],
             compute: blade_graphics::ShaderFunction {
                 shader: &shader,
+                constants: &Default::default(),
                 entry_point: "measure_prob",
             },
         });
@@ -248,10 +252,10 @@ impl StateGpu {
 
         let m = &gate.matrix;
         let params = Gate1Params {
-            m00: [m[(0, 0)].re as f32, m[(0, 0)].im as f32],
-            m01: [m[(0, 1)].re as f32, m[(0, 1)].im as f32],
-            m10: [m[(1, 0)].re as f32, m[(1, 0)].im as f32],
-            m11: [m[(1, 1)].re as f32, m[(1, 1)].im as f32],
+            m00: [m.x.x.re as f32, m.x.x.im as f32],
+            m01: [m.x.y.re as f32, m.x.y.im as f32],
+            m10: [m.y.x.re as f32, m.y.x.im as f32],
+            m11: [m.y.y.re as f32, m.y.y.im as f32],
             target_bit: 1u32 << target,
             num_pairs,
             _pad0: 0,

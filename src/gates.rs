@@ -3,7 +3,6 @@
 //! Each gate function consumes its input [`Qubit`](crate::qubit::Qubit) handles
 //! and returns new ones, preserving the move-only linearity invariant.
 
-use nalgebra::Matrix2;
 use num_complex::Complex64;
 use std::f64::consts::{FRAC_1_SQRT_2, PI};
 
@@ -18,7 +17,8 @@ fn c(re: f64, im: f64) -> C {
 #[derive(Debug, Clone)]
 pub struct Gate1 {
     pub name: &'static str,
-    pub matrix: Matrix2<C>,
+    /// Row-major 2×2 matrix.
+    pub matrix: mint::RowMatrix2<C>,
 }
 
 /// 4×4 unitary matrix representing a two-qubit gate (stored as four 2×2 blocks).
@@ -35,7 +35,7 @@ pub struct Gate2 {
 pub fn x() -> Gate1 {
     Gate1 {
         name: "X",
-        matrix: Matrix2::new(c(0., 0.), c(1., 0.), c(1., 0.), c(0., 0.)),
+        matrix: [[c(0., 0.), c(1., 0.)], [c(1., 0.), c(0., 0.)]].into(),
     }
 }
 
@@ -43,7 +43,7 @@ pub fn x() -> Gate1 {
 pub fn y() -> Gate1 {
     Gate1 {
         name: "Y",
-        matrix: Matrix2::new(c(0., 0.), c(0., -1.), c(0., 1.), c(0., 0.)),
+        matrix: [[c(0., 0.), c(0., -1.)], [c(0., 1.), c(0., 0.)]].into(),
     }
 }
 
@@ -51,7 +51,7 @@ pub fn y() -> Gate1 {
 pub fn z() -> Gate1 {
     Gate1 {
         name: "Z",
-        matrix: Matrix2::new(c(1., 0.), c(0., 0.), c(0., 0.), c(-1., 0.)),
+        matrix: [[c(1., 0.), c(0., 0.)], [c(0., 0.), c(-1., 0.)]].into(),
     }
 }
 
@@ -60,7 +60,7 @@ pub fn h() -> Gate1 {
     let s = FRAC_1_SQRT_2;
     Gate1 {
         name: "H",
-        matrix: Matrix2::new(c(s, 0.), c(s, 0.), c(s, 0.), c(-s, 0.)),
+        matrix: [[c(s, 0.), c(s, 0.)], [c(s, 0.), c(-s, 0.)]].into(),
     }
 }
 
@@ -68,7 +68,7 @@ pub fn h() -> Gate1 {
 pub fn s() -> Gate1 {
     Gate1 {
         name: "S",
-        matrix: Matrix2::new(c(1., 0.), c(0., 0.), c(0., 0.), c(0., 1.)),
+        matrix: [[c(1., 0.), c(0., 0.)], [c(0., 0.), c(0., 1.)]].into(),
     }
 }
 
@@ -78,7 +78,7 @@ pub fn t() -> Gate1 {
     let t_sin = (PI / 4.0).sin();
     Gate1 {
         name: "T",
-        matrix: Matrix2::new(c(1., 0.), c(0., 0.), c(0., 0.), c(t_phase, t_sin)),
+        matrix: [[c(1., 0.), c(0., 0.)], [c(0., 0.), c(t_phase, t_sin)]].into(),
     }
 }
 
@@ -86,12 +86,11 @@ pub fn t() -> Gate1 {
 pub fn rz(theta: f64) -> Gate1 {
     Gate1 {
         name: "Rz",
-        matrix: Matrix2::new(
-            c((-theta / 2.0).cos(), (-theta / 2.0).sin()),
-            c(0., 0.),
-            c(0., 0.),
-            c((theta / 2.0).cos(), (theta / 2.0).sin()),
-        ),
+        matrix: [
+            [c((-theta / 2.0).cos(), (-theta / 2.0).sin()), c(0., 0.)],
+            [c(0., 0.), c((theta / 2.0).cos(), (theta / 2.0).sin())],
+        ]
+        .into(),
     }
 }
 

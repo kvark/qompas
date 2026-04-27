@@ -161,6 +161,7 @@ impl CircuitPanel {
                     rect2,
                     4.0,
                     Stroke::new(1.0, Color32::from_rgb(100, 180, 255)),
+                    egui::StrokeKind::Outside,
                 );
                 painter.text(
                     p1,
@@ -184,6 +185,7 @@ impl CircuitPanel {
                 rect,
                 4.0,
                 Stroke::new(1.0, Color32::from_rgb(100, 160, 255)),
+                egui::StrokeKind::Outside,
             );
             painter.text(
                 center,

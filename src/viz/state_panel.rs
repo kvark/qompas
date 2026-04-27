@@ -91,7 +91,12 @@ pub fn state_panel_ui(ui: &mut egui::Ui, state: &StateVec) {
             Color32::from_gray(50)
         };
         painter.rect_filled(bar_rect, 2.0, color);
-        painter.rect_stroke(bar_rect, 2.0, Stroke::new(0.5, Color32::from_gray(100)));
+        painter.rect_stroke(
+            bar_rect,
+            2.0,
+            Stroke::new(0.5, Color32::from_gray(100)),
+            egui::StrokeKind::Outside,
+        );
 
         // Probability text
         if prob > 1e-4 {
